@@ -82,8 +82,9 @@ def payment(reg_id):
     conn.close()
 
     if not data:
-        return "❌ Invalid Link"
+        return "Invalid REG_ID"
 
+    # ✅ FIXED expiry logic
     expiry_time = (data['CREATED_AT'] + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
 
     return render_template(
