@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial;
+        }
+
+        #timer {
+            font-size: 26px;
+            color: red;
+            margin: 10px;
+        }
+
+        #expired {
+            display: none;
+            color: red;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid purple;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<h2>💰 Pay ₹700</h2>
+
+<p>⚠️ Do NOT refresh manually</p>
+
+<div id="timer">05:00</div>
+
+<img id="qr"
+     src="{{ url_for('static', filename=qr_file) }}?v={{ reg_id }}"
+     width="220">
+
+<div id="expired">⏰ QR Expired! Generating new...</div>
+
+<form id="form" action="/verify" method="POST">
+    <input type="text" name="reg_id" placeholder="Enter REG_ID" required>
+    <button type="submit">Verify</button>
+</form>
+
+<div id="loader" class="loader" style="display:none;"></div>
+
+<script>
+    const expiry = new Date("{{ expiry_time }}").getTime();
+
+    const timerEl = document.getElementById("timer");
+    const expiredEl = document.getElementById("expired");
+    const formEl = document.getElementById("form");
+    const loader = document.getElementById("loader");
+
+    const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = expiry - now;
+
+        if (distance <= 0) {
+            clearInterval(interval);
+
+            timerEl.innerHTML = "00:00";
+            expiredEl.style.display = "block";
+            formEl.style.display = "none";
+            loader.style.display = "block";
+
+            // 🔥 Auto reload after 2 sec → new QR
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 2000);
+
+            return;
+        }
+
+        const minutes = Math.floor(distance / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        timerEl.innerHTML =
+            String(minutes).padStart(2, '0') + ":" +
+            String(seconds).padStart(2, '0');
+
+    }, 1000);
+</script>
+
+</body>
+</html>

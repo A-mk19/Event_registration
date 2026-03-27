@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration</title>
+</head>
+<body style="text-align:center; font-family:Arial;">
+
+<h2>📝 Complete Registration</h2>
+
+<form action="/submit" method="POST">
+
+    <input type="text" name="reg_id" value="{{ reg_id }}" readonly><br><br>
+
+    <input type="text" name="htno" placeholder="Hall Ticket Number" required><br><br>
+
+    <input type="text" name="name" placeholder="Full Name" required><br><br>
+
+
+    <SELECT name="PY" required>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+
+    </SELECT>
+    <select name="branch" required>
+        <option value="">Select Branch</option>
+        <option value="CSE">CSE</option>
+        <option value="ECE">ECE</option>
+        <option value="EEE">EEE</option>
+        <option value="MECH">MECH</option>
+        <option value="CIVIL">CIVIL</option>
+    </select><br><br>
+
+    <input type="number" name="phone" placeholder="Phone Number" required><br><br>
+
+    <input type="number" name="whatsapp" placeholder="WhatsApp Number" required><br><br>
+
+    <button type="submit">Submit</button>
+
+</form>
+
+</body>
+</html>
