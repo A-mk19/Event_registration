@@ -11,10 +11,15 @@ app = Flask(__name__)
 # 🔌 DB Connection
 def get_db():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="2005",
-        database="EV2"
+        # host="localhost",
+        # user="root",
+        # password="2005",
+        # database="EV2"
+        host="centerbeam.proxy.rlwy.net",
+    port=47605,          # ⚠️ VERY IMPORTANT
+    user="root",
+    password="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
+    database="railway"
     )
 
 # 🎯 Generate REG_ID
