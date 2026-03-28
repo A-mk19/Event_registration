@@ -22,7 +22,7 @@ def get_db():
         # password=os.getenv("DB_PASSWORD"),
         # database=os.getenv("DB_NAME")
         DB_HOST="centerbeam.proxy.rlwy.net",
-DB_PORT="54321",
+DB_PORT="47605",
 DB_USER="root",
 DB_PASSWORD="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
 DB_NAME="railway"
