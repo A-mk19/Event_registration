@@ -1,17 +1,15 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect
 import mysql.connector
-import random, string, os, secrets
+import random
+import string
 from datetime import datetime, timedelta
 import qrcode
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import A4
-from io import BytesIO
+import os
+import secrets
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
 
-# 🔌 DB
+# 🔌 DB Connection (ENV VARIABLES)
 def get_db():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
@@ -26,57 +24,35 @@ def get_db():
 def cleanup_expired():
     conn = get_db()
     cursor = conn.cursor()
+
     cursor.execute("""
         DELETE FROM ST_TABLE
         WHERE STATUS='PENDING'
         AND CREATED_AT < NOW() - INTERVAL 5 MINUTE
     """)
+
     conn.commit()
     cursor.close()
     conn.close()
 
-# 🎯 REG_ID
+# 🎯 Generate REG_ID
 def generate_reg_id():
     year = str(datetime.utcnow().year)[-2:]
     rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"EV{year}{rand}"
 
-# 🔐 TOKEN
+# 🔐 Generate TOKEN (SECURE)
 def generate_token():
     return secrets.token_urlsafe(16)
 
-# 🔳 QR
+# 🔳 Generate QR
 def generate_qr(reg_id):
-    upi = f"upi://pay?pa=amindayalamanoj@pingpay&pn=Manoj%20Kumar&am=1&cu=INR&tn={reg_id}"
+    upi_link = f"upi://pay?pa=amindayalamanoj@pingpay&pn=Manoj%20Kumar&am=1&cu=INR&tn={reg_id}"
+
     if not os.path.exists("static"):
         os.makedirs("static")
-    qrcode.make(upi).save(f"static/qr_{reg_id}.png")
 
-# 📄 PDF
-def generate_pdf(data):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    styles = getSampleStyleSheet()
-
-    content = [
-        Paragraph("Event Registration Receipt", styles['Title']),
-        Spacer(1, 20),
-        Paragraph(f"Name: {data['Na_ME']}", styles['Normal']),
-        Paragraph(f"HTNO: {data['HTNO']}", styles['Normal']),
-        Paragraph(f"Branch: {data['BRANCH']}", styles['Normal']),
-        Paragraph(f"Year: {data['PY']}", styles['Normal']),
-        Paragraph(f"Phone: {data['PMBNO']}", styles['Normal']),
-        Paragraph(f"WhatsApp: {data['WTNO']}", styles['Normal']),
-        Paragraph(f"UTR ID: {data['UTR']}", styles['Normal']),
-        Paragraph(f"Registration ID: {data['REG_ID']}", styles['Normal']),
-        Spacer(1, 20),
-        Paragraph("Payment Status: SUCCESS", styles['Normal']),
-        Paragraph(f"Date: {datetime.utcnow()}", styles['Normal'])
-    ]
-
-    doc.build(content)
-    buffer.seek(0)
-    return buffer
+    qrcode.make(upi_link).save(f"static/qr_{reg_id}.png")
 
 # 🏠 HOME
 @app.route('/')
@@ -122,17 +98,20 @@ def payment(token):
     reg_id = data['REG_ID']
     created_at = data['CREATED_AT']
 
-    elapsed = (datetime.utcnow() - created_at).total_seconds()
-    remaining = int(300 - elapsed)
+    if isinstance(created_at, str):
+        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
 
-    if remaining <= 0:
+    elapsed = (datetime.utcnow() - created_at).total_seconds()
+    remaining_seconds = int(300 - elapsed)
+
+    if remaining_seconds <= 0:
         return redirect('/')
 
     return render_template(
         "payment.html",
         reg_id=reg_id,
         qr_file=f"qr_{reg_id}.png",
-        remaining_seconds=remaining
+        remaining_seconds=remaining_seconds
     )
 
 # 🔐 VERIFY
@@ -140,7 +119,37 @@ def payment(token):
 def verify():
     cleanup_expired()
 
-    reg_id = request.form['reg_id']
+    user_reg = request.form['reg_id']
+
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (user_reg,))
+    data = cursor.fetchone()
+
+    if not data:
+        return "❌ Invalid REG_ID"
+
+    if data['STATUS'] != 'PENDING':
+        return "⚠️ Already used"
+
+    created_at = data['CREATED_AT']
+
+    if isinstance(created_at, str):
+        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+
+    if datetime.utcnow() - created_at > timedelta(minutes=5):
+        return "⏰ Expired"
+
+    cursor.close()
+    conn.close()
+
+    return redirect(f'/register/{user_reg}')
+
+# 📝 REGISTER
+@app.route('/register/<reg_id>')
+def register(reg_id):
+    cleanup_expired()
 
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -148,22 +157,12 @@ def verify():
     cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (reg_id,))
     data = cursor.fetchone()
 
-    if not data or data['STATUS'] != 'PENDING':
-        return "Invalid or Used"
-
-    created_at = data['CREATED_AT']
-
-    if datetime.utcnow() - created_at > timedelta(minutes=5):
-        return "Expired"
-
     cursor.close()
     conn.close()
 
-    return redirect(f'/register/{reg_id}')
+    if not data or data['STATUS'] != 'PENDING':
+        return redirect('/')
 
-# 📝 REGISTER
-@app.route('/register/<reg_id>')
-def register(reg_id):
     return render_template("register.html", reg_id=reg_id)
 
 # 📥 SUBMIT
@@ -173,61 +172,37 @@ def submit():
     cursor = conn.cursor()
 
     reg_id = request.form['reg_id']
-    utr = request.form['utr']
+    htno = request.form['htno']
+    name = request.form['name']
+    py = request.form.get('py')
+    branch = request.form['branch']
+    phone = request.form['phone']
+    whatsapp = request.form['whatsapp']
 
-    if len(utr) < 8:
-        return "Invalid UTR"
+    try:
+        cursor.execute("""
+            UPDATE ST_TABLE
+            SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
+                PMBNO=%s, WTNO=%s, STATUS='REGISTERED'
+            WHERE REG_ID=%s
+        """, (htno, name, py, branch, phone, whatsapp, reg_id))
 
-    cursor.execute("""
-        UPDATE ST_TABLE SET
-        HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
-        PMBNO=%s, WTNO=%s, UTR=%s, STATUS='REGISTERED'
-        WHERE REG_ID=%s
-    """, (
-        request.form['htno'],
-        request.form['name'],
-        request.form['py'],
-        request.form['branch'],
-        request.form['phone'],
-        request.form['whatsapp'],
-        utr,
-        reg_id
-    ))
+        conn.commit()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        return f"Error: {e}"
 
-    session['reg_id'] = reg_id
+    finally:
+        cursor.close()
+        conn.close()
 
     return redirect('/success')
 
 # 🎉 SUCCESS
 @app.route('/success')
 def success():
-    reg_id = session.get('reg_id')
-    if not reg_id:
-        return redirect('/')
-    return render_template("success.html", reg_id=reg_id)
+    return render_template("success.html")
 
-# 📄 DOWNLOAD
-@app.route('/download')
-def download():
-    reg_id = session.get('reg_id')
-
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (reg_id,))
-    data = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    pdf = generate_pdf(data)
-
-    return send_file(pdf, as_attachment=True,
-                     download_name=f"{reg_id}.pdf",
-                     mimetype='application/pdf')
-
+# 🔥 RUN
 if __name__ == '__main__':
     app.run()
