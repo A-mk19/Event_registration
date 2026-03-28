@@ -33,6 +33,12 @@
 
     <p>Save this ID for payment & verification.</p>
 </div>
+<script>
+function copyID() {
+    navigator.clipboard.writeText("{{ reg_id }}");
+    alert("Copied!");
+}
+</script>
 
 </body>
 </html>
