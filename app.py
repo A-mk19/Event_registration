@@ -178,19 +178,32 @@ def submit():
     branch = request.form['branch']
     phone = request.form['phone']
     whatsapp = request.form['whatsapp']
-    utr = request.form['utr']
+    utr = request.form['utr'].strip()
 
     try:
+        # 🔍 STEP 1: Check if UTR already exists (for other users)
+        cursor.execute("""
+            SELECT REG_ID FROM ST_TABLE WHERE utr = %s
+        """, (utr,))
+        existing = cursor.fetchone()
+
+        if existing and str(existing[0]) != str(reg_id):
+            return "❌ This UTR is already used by another user!"
+
+        # ✅ STEP 2: Update safely
         cursor.execute("""
             UPDATE ST_TABLE
             SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
-                PMBNO=%s, WTNO=%s, utr = %s,STATUS='REGISTERED'
+                PMBNO=%s, WTNO=%s, utr=%s, STATUS='REGISTERED'
             WHERE REG_ID=%s
-        """, (htno, name, py, branch, phone, whatsapp, reg_id,utr))
+        """, (htno, name, py, branch, phone, whatsapp, utr, reg_id))
 
         conn.commit()
 
+    # 🔥 STEP 3: Handle race condition (DB-level protection)
     except Exception as e:
+        if "Duplicate" in str(e) or "UNIQUE" in str(e):
+            return "❌ Duplicate UTR detected! Try another."
         return f"Error: {e}"
 
     finally:
@@ -198,7 +211,6 @@ def submit():
         conn.close()
 
     return redirect('/success')
-
 # 🎉 SUCCESS
 @app.route('/success')
 def success():
