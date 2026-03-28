@@ -210,7 +210,7 @@ def submit():
         cursor.close()
         conn.close()
 
-    return redirect('/success')
+    return redirect(f'/success/{reg_id}')
 # 🎉 SUCCESS
 @app.route('/success/<reg_id>')
 def success(reg_id):
