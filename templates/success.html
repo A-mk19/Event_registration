@@ -26,12 +26,14 @@
 <body>
 
 <div class="box">
-    <h2>🎉 Registration Successful</h2>
+  <h2>🎉 Registration Successful</h2>
 
-    <p>Your Registration ID:</p>
-    <div class="id">{{ reg_id }}</div>
+<p>Your Registration ID:</p>
+<h3>{{ reg_id }}</h3>
 
-    <p>Save this ID for payment & verification.</p>
+<a href="/download">
+    <button>📄 Download Receipt</button>
+</a>
 </div>
 <script>
 function copyID() {
