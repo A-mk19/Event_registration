@@ -26,7 +26,7 @@ def cleanup_expired():
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM ST_TABLE
+        DELETE FROM ST_TABLE2
         WHERE STATUS='PENDING'
         AND CREATED_AT < NOW() - INTERVAL 5 MINUTE
     """)
@@ -66,7 +66,7 @@ def home():
     token = generate_token()
 
     cursor.execute("""
-        INSERT INTO ST_TABLE (REG_ID, TOKEN, CREATED_AT, STATUS)
+        INSERT INTO ST_TABLE2 (REG_ID, TOKEN, CREATED_AT, STATUS)
         VALUES (%s, %s, %s, %s)
     """, (reg_id, token, datetime.utcnow(), "PENDING"))
 
@@ -86,7 +86,7 @@ def payment(token):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM ST_TABLE WHERE TOKEN=%s", (token,))
+    cursor.execute("SELECT * FROM ST_TABLE2 WHERE TOKEN=%s", (token,))
     data = cursor.fetchone()
 
     cursor.close()
@@ -124,7 +124,7 @@ def verify():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (user_reg,))
+    cursor.execute("SELECT * FROM ST_TABLE2 WHERE REG_ID=%s", (user_reg,))
     data = cursor.fetchone()
 
     if not data:
@@ -154,7 +154,7 @@ def register(reg_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (reg_id,))
+    cursor.execute("SELECT * FROM ST_TABLE2 WHERE REG_ID=%s", (reg_id,))
     data = cursor.fetchone()
 
     cursor.close()
@@ -183,7 +183,7 @@ def submit():
     try:
         # 🔍 STEP 1: Check if UTR already exists (for other users)
         cursor.execute("""
-            SELECT REG_ID FROM ST_TABLE WHERE utr = %s
+            SELECT REG_ID FROM ST_TABLE2 WHERE utr = %s
         """, (utr,))
         existing = cursor.fetchone()
 
@@ -192,7 +192,7 @@ def submit():
 
         # ✅ STEP 2: Update safely
         cursor.execute("""
-            UPDATE ST_TABLE
+            UPDATE ST_TABLE2
             SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
                 PMBNO=%s, WTNO=%s, utr=%s, STATUS='REGISTERED'
             WHERE REG_ID=%s
