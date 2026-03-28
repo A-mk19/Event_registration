@@ -178,14 +178,15 @@ def submit():
     branch = request.form['branch']
     phone = request.form['phone']
     whatsapp = request.form['whatsapp']
+    utr = request.form['utr']
 
     try:
         cursor.execute("""
             UPDATE ST_TABLE
             SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
-                PMBNO=%s, WTNO=%s, STATUS='REGISTERED'
+                PMBNO=%s, WTNO=%s, utr = %s,STATUS='REGISTERED'
             WHERE REG_ID=%s
-        """, (htno, name, py, branch, phone, whatsapp, reg_id))
+        """, (htno, name, py, branch, phone, whatsapp, reg_id,utr))
 
         conn.commit()
 
@@ -201,7 +202,7 @@ def submit():
 # 🎉 SUCCESS
 @app.route('/success')
 def success():
-    return render_template("success.html")
+    return render_template("success.html",reg_id=reg_id)
 
 # 🔥 RUN
 if __name__ == '__main__':
