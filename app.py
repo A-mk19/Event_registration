@@ -196,7 +196,12 @@ def submit():
 
 # 🎉 SUCCESS
 @app.route('/success')
-def success(reg_id):
+def success():
+    reg_id = session.get('reg_id')
+
+    if not reg_id:
+        return redirect('/')
+
     return render_template("success.html", reg_id=reg_id)
 
 # 🔥 Render
