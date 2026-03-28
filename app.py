@@ -101,8 +101,11 @@ def payment(reg_id):
     remaining_seconds=300
 )
 # 🔐 VERIFY
-@app.route('/verify', methods=['POST'])
+@app.route('/verify', methods=['GET', 'POST'])
 def verify():
+    if request.method == 'GET':
+        return redirect('/')
+
     user_reg = request.form['reg_id']
 
     conn = get_db()
