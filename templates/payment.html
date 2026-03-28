@@ -5,7 +5,26 @@
     <style>
         body { text-align: center; font-family: Arial; }
         #timer { font-size: 26px; color: red; margin: 10px; }
-    </style>
+    </style><h2>💰 Pay ₹700</h2>
+<div id="timer"></div>
+
+<img src="{{ url_for('static', filename=qr_file) }}" width="220">
+
+<form action="/verify" method="POST">
+    <input name="reg_id" placeholder="Enter REG_ID" required>
+    <button>Verify</button>
+</form>
+
+<script>
+let t = {{ remaining_seconds }};
+setInterval(()=>{
+    if(t<=0){ location.href="/"; }
+    let m=Math.floor(t/60);
+    let s=t%60;
+    document.getElementById("timer").innerHTML = m+":"+s;
+    t--;
+},1000);
+</script>
 </head>
 <body>
 
