@@ -9,13 +9,10 @@
 
 <form action="/submit" method="POST">
 
-    <input type="text" name="reg_id" value="{{ reg_id }}" readonly><br><br>
+    <input type="text" name="reg_id" value="{{ reg_id }} readonly">
 
-    <input type="text" name="htno" placeholder="Hall Ticket Number" required><br><br>
-
-    <input type="text" name="name" placeholder="Full Name" required><br><br>
-
-
+    <input name="htno" placeholder="HTNO" required>
+    <input name="name" placeholder="Name" required>
     <SELECT name="PY" required>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -31,12 +28,13 @@
         <option value="MECH">MECH</option>
         <option value="CIVIL">CIVIL</option>
     </select><br><br>
+    <input name="phone" placeholder="Phone" required>
+    <input name="whatsapp" placeholder="WhatsApp" required>
 
-    <input type="number" name="phone" placeholder="Phone Number" required><br><br>
+    <!-- 🔥 UTR FIELD -->
+    <input name="utr" placeholder="Enter UTR / Transaction ID" required>
 
-    <input type="number" name="whatsapp" placeholder="WhatsApp Number" required><br><br>
-
-    <button type="submit">Submit</button>
+    <button>Submit</button>
 
 </form>
 
