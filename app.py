@@ -1,11 +1,8 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import mysql.connector
-import random
-import string
+import random, string, os, secrets
 from datetime import datetime, timedelta
 import qrcode
-import os
-import secrets
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
@@ -25,7 +22,7 @@ def get_db():
         ssl_disabled=True
     )
 
-# 🧹 Cleanup
+# 🧹 Cleanup expired
 def cleanup_expired():
     conn = get_db()
     cursor = conn.cursor()
@@ -70,6 +67,7 @@ def generate_pdf(data):
         Paragraph(f"Year: {data['PY']}", styles['Normal']),
         Paragraph(f"Phone: {data['PMBNO']}", styles['Normal']),
         Paragraph(f"WhatsApp: {data['WTNO']}", styles['Normal']),
+        Paragraph(f"UTR ID: {data['UTR']}", styles['Normal']),
         Paragraph(f"Registration ID: {data['REG_ID']}", styles['Normal']),
         Spacer(1, 20),
         Paragraph("Payment Status: SUCCESS", styles['Normal']),
@@ -175,11 +173,15 @@ def submit():
     cursor = conn.cursor()
 
     reg_id = request.form['reg_id']
+    utr = request.form['utr']
+
+    if len(utr) < 8:
+        return "Invalid UTR"
 
     cursor.execute("""
         UPDATE ST_TABLE SET
         HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
-        PMBNO=%s, WTNO=%s, STATUS='REGISTERED'
+        PMBNO=%s, WTNO=%s, UTR=%s, STATUS='REGISTERED'
         WHERE REG_ID=%s
     """, (
         request.form['htno'],
@@ -188,6 +190,7 @@ def submit():
         request.form['branch'],
         request.form['phone'],
         request.form['whatsapp'],
+        utr,
         reg_id
     ))
 
@@ -207,7 +210,7 @@ def success():
         return redirect('/')
     return render_template("success.html", reg_id=reg_id)
 
-# 📄 DOWNLOAD PDF
+# 📄 DOWNLOAD
 @app.route('/download')
 def download():
     reg_id = session.get('reg_id')
