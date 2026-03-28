@@ -47,7 +47,7 @@ def generate_token():
 
 # 🔳 Generate QR
 def generate_qr(reg_id):
-    upi_link = f"upi://pay?pa=amindayalamanoj@pingpay&pn=Manoj%20Kumar&am=1&cu=INR&tn={reg_id}"
+    upi_link = f"upi://pay?pa=amindayalamanoj@pingpay&pn=Manoj%20Kumar&am=702&cu=INR&tn={reg_id}"
 
     if not os.path.exists("static"):
         os.makedirs("static")
