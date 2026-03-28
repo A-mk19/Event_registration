@@ -20,8 +20,7 @@ def get_db():
         port=int(os.getenv("DB_PORT", 3306)),  # ✅ fallback
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        ssl_disabled=True
+        database=os.getenv("DB_NAME")
     )
 
 # 🎯 Generate REG_ID
