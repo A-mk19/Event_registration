@@ -81,7 +81,7 @@ def payment(reg_id):
     if not data:
         return "❌ Invalid Link"
 
-    expiry_time = (data['CREATED_AT'] + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+    expiry_time = (data['CREATED_AT'] + timedelta(minutes=5)).isoformat()
 
     return render_template(
         "payment.html",
