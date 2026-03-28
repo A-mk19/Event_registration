@@ -5,7 +5,13 @@
     <style>
         body { text-align: center; font-family: Arial; }
         #timer { font-size: 26px; color: red; margin: 10px; }
-    </style><h2>💰 Pay ₹700</h2>
+    </style>
+</head>
+
+<body>
+
+<h2>💰 Pay ₹700</h2>
+
 <div id="timer"></div>
 
 <img src="{{ url_for('static', filename=qr_file) }}" width="220">
@@ -16,49 +22,32 @@
 </form>
 
 <script>
-let t = {{ remaining_seconds }};
-setInterval(()=>{
-    if(t<=0){ location.href="/"; }
-    let m=Math.floor(t/60);
-    let s=t%60;
-    document.getElementById("timer").innerHTML = m+":"+s;
-    t--;
-},1000);
-</script>
-</head>
-<body>
+let timeLeft = {{ remaining_seconds }};
+const timerEl = document.getElementById("timer");
 
-<h2>💰 Pay ₹700</h2>
+const interval = setInterval(() => {
 
-<div id="timer">300</div>
-   <script>
-    let timeLeft = {{ remaining_seconds }};
+    if (timeLeft <= 0) {
+        clearInterval(interval);
+        timerEl.innerHTML = "00:00";
 
-    const timerEl = document.getElementById("timer");
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 1000);
 
-    const interval = setInterval(() => {
+        return;
+    }
 
-        if (timeLeft <= 0) {
-            clearInterval(interval);
-            timerEl.innerHTML = "00:00";
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
 
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 2000);
+    timerEl.innerHTML =
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0');
 
-            return;
-        }
+    timeLeft--;
 
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-
-        timerEl.innerHTML =
-            String(minutes).padStart(2, '0') + ":" +
-            String(seconds).padStart(2, '0');
-
-        timeLeft--;
-
-    }, 1000);
+}, 1000);
 </script>
 
 </body>
