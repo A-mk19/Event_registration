@@ -92,15 +92,14 @@ def payment(reg_id):
         created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
 
     # 🔥 FIX: ISO format
-    expiry_time = (created_at + timedelta(minutes=5)).isoformat()
+    # expiry_time = (created_at + timedelta(minutes=5)).isoformat()
 
     return render_template(
-        "payment.html",
-        reg_id=reg_id,
-        qr_file=f"qr_{reg_id}.png",
-        expiry_time=expiry_time
-    )
-
+    "payment.html",
+    reg_id=reg_id,
+    qr_file=f"qr_{reg_id}.png",
+    remaining_seconds=300
+)
 # 🔐 VERIFY
 @app.route('/verify', methods=['POST'])
 def verify():
