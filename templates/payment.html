@@ -31,13 +31,6 @@ setInterval(()=>{
 <h2>💰 Pay ₹700</h2>
 
 <div id="timer">300</div>
-
-<img src="{{ url_for('static', filename=qr_file) }}?v={{ reg_id }}" width="220">
-
-<form action="/verify" method="POST">
-    <input type="text" name="reg_id" placeholder="Enter REG_ID" required>
-    <button type="submit">Verify</button>
-</form>
    <script>
     let timeLeft = {{ remaining_seconds }};
 
