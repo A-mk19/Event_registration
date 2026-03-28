@@ -5,10 +5,11 @@ import string
 from datetime import datetime, timedelta
 import qrcode
 import os
+import secrets
 
 app = Flask(__name__)
 
-# 🔌 DB Connection (USE ENV VARIABLES IN PRODUCTION)
+# 🔌 DB Connection (ENV VARIABLES)
 def get_db():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
@@ -19,7 +20,7 @@ def get_db():
         ssl_disabled=True
     )
 
-# 🧹 CLEANUP FUNCTION (IMPORTANT)
+# 🧹 Cleanup expired
 def cleanup_expired():
     conn = get_db()
     cursor = conn.cursor()
@@ -40,6 +41,10 @@ def generate_reg_id():
     rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"EV{year}{rand}"
 
+# 🔐 Generate TOKEN (SECURE)
+def generate_token():
+    return secrets.token_urlsafe(16)
+
 # 🔳 Generate QR
 def generate_qr(reg_id):
     upi_link = f"upi://pay?pa=amindayalamanoj@pingpay&pn=Manoj%20Kumar&am=1&cu=INR&tn={reg_id}"
@@ -52,17 +57,18 @@ def generate_qr(reg_id):
 # 🏠 HOME
 @app.route('/')
 def home():
-    cleanup_expired()  # 🔥 always clean DB
+    cleanup_expired()
 
     conn = get_db()
     cursor = conn.cursor()
 
     reg_id = generate_reg_id()
+    token = generate_token()
 
     cursor.execute("""
-        INSERT INTO ST_TABLE (REG_ID, CREATED_AT, STATUS)
-        VALUES (%s, %s, %s)
-    """, (reg_id, datetime.utcnow(), "PENDING"))
+        INSERT INTO ST_TABLE (REG_ID, TOKEN, CREATED_AT, STATUS)
+        VALUES (%s, %s, %s, %s)
+    """, (reg_id, token, datetime.utcnow(), "PENDING"))
 
     conn.commit()
     cursor.close()
@@ -70,17 +76,17 @@ def home():
 
     generate_qr(reg_id)
 
-    return redirect(f'/payment/{reg_id}')
+    return redirect(f'/payment/{token}')
 
-# 💳 PAYMENT PAGE
-@app.route('/payment/<reg_id>')
-def payment(reg_id):
+# 💳 PAYMENT
+@app.route('/payment/<token>')
+def payment(token):
     cleanup_expired()
 
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM ST_TABLE WHERE REG_ID=%s", (reg_id,))
+    cursor.execute("SELECT * FROM ST_TABLE WHERE TOKEN=%s", (token,))
     data = cursor.fetchone()
 
     cursor.close()
@@ -89,6 +95,7 @@ def payment(reg_id):
     if not data:
         return redirect('/')
 
+    reg_id = data['REG_ID']
     created_at = data['CREATED_AT']
 
     if isinstance(created_at, str):
@@ -108,11 +115,8 @@ def payment(reg_id):
     )
 
 # 🔐 VERIFY
-@app.route('/verify', methods=['GET', 'POST'])
+@app.route('/verify', methods=['POST'])
 def verify():
-    if request.method == 'GET':
-        return redirect('/')
-
     cleanup_expired()
 
     user_reg = request.form['reg_id']
@@ -192,18 +196,13 @@ def submit():
         cursor.close()
         conn.close()
 
-    return redirect('/success/'+ reg_id)
+    return redirect('/success')
 
 # 🎉 SUCCESS
 @app.route('/success')
 def success():
-    reg_id = session.get('reg_id')
+    return render_template("success.html")
 
-    if not reg_id:
-        return redirect('/')
-
-    return render_template("success.html", reg_id=reg_id)
-
-# 🔥 Render
+# 🔥 RUN
 if __name__ == '__main__':
     app.run()
