@@ -6,13 +6,18 @@ from datetime import datetime, timedelta
 import qrcode
 import os
 
-
 app = Flask(__name__)
 
-# 🔌 DB Connection
+# 🔌 DB Connection (Render env variables)
 def get_db():
     return mysql.connector.connect(
-    host="centerbeam.proxy.rlwy.net",
+        # host=os.getenv("DB_HOST"),
+        # port=int(os.getenv("DB_PORT", 3306)),
+        # user=os.getenv("DB_USER"),
+        # password=os.getenv("DB_PASSWORD"),
+        # database=os.getenv("DB_NAME"),
+        # ssl_disabled=True
+        host="centerbeam.proxy.rlwy.net",
     port=47605,          # ⚠️ VERY IMPORTANT
     user="root",
     password="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
@@ -21,7 +26,7 @@ def get_db():
 
 # 🎯 Generate REG_ID
 def generate_reg_id():
-    year = str(datetime.now().year)[-2:]
+    year = str(datetime.utcnow().year)[-2:]
     rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"EV{year}{rand}"
 
@@ -34,15 +39,14 @@ def generate_qr(reg_id):
 
     path = f"static/qr_{reg_id}.png"
     qrcode.make(upi_link).save(path)
-    return path
 
-# 🏠 HOME → Create REG_ID
+# 🏠 HOME
 @app.route('/')
 def home():
     conn = get_db()
     cursor = conn.cursor()
 
-    # 🧹 Cleanup expired
+    # 🧹 delete expired
     cursor.execute("""
         DELETE FROM ST_TABLE
         WHERE STATUS='PENDING'
@@ -50,13 +54,13 @@ def home():
     """)
     conn.commit()
 
-    # 🎯 New REG_ID
+    # 🎯 create new REG_ID
     reg_id = generate_reg_id()
 
     cursor.execute("""
         INSERT INTO ST_TABLE (REG_ID, CREATED_AT, STATUS)
         VALUES (%s, %s, %s)
-    """, (reg_id, datetime.now(), "PENDING"))
+    """, (reg_id, datetime.utcnow(), "PENDING"))
 
     conn.commit()
     cursor.close()
@@ -81,7 +85,14 @@ def payment(reg_id):
     if not data:
         return "❌ Invalid Link"
 
-    expiry_time = (data['CREATED_AT'] + timedelta(minutes=5)).isoformat()
+    created_at = data['CREATED_AT']
+
+    # Ensure datetime
+    if isinstance(created_at, str):
+        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+
+    # 🔥 FIX: ISO format
+    expiry_time = (created_at + timedelta(minutes=5)).isoformat()
 
     return render_template(
         "payment.html",
@@ -90,7 +101,7 @@ def payment(reg_id):
         expiry_time=expiry_time
     )
 
-# 🔐 VERIFY REG_ID
+# 🔐 VERIFY
 @app.route('/verify', methods=['POST'])
 def verify():
     user_reg = request.form['reg_id']
@@ -107,7 +118,11 @@ def verify():
     if data['STATUS'] != 'PENDING':
         return "⚠️ Already used"
 
-    if datetime.now() - data['CREATED_AT'] > timedelta(minutes=5):
+    created_at = data['CREATED_AT']
+    if isinstance(created_at, str):
+        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+
+    if datetime.utcnow() - created_at > timedelta(minutes=5):
         cursor.execute("DELETE FROM ST_TABLE WHERE REG_ID=%s", (user_reg,))
         conn.commit()
         return "⏰ Expired"
@@ -117,7 +132,7 @@ def verify():
 
     return redirect(f'/register/{user_reg}')
 
-# 📝 REGISTER PAGE
+# 📝 REGISTER
 @app.route('/register/<reg_id>')
 def register(reg_id):
     conn = get_db()
@@ -151,7 +166,8 @@ def submit():
     try:
         cursor.execute("""
             UPDATE ST_TABLE
-            SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s, PMBNO=%s, WTNO=%s, STATUS='REGISTERED'
+            SET HTNO=%s, Na_ME=%s, PY=%s, BRANCH=%s,
+                PMBNO=%s, WTNO=%s, STATUS='REGISTERED'
             WHERE REG_ID=%s
         """, (htno, name, py, branch, phone, whatsapp, reg_id))
 
@@ -171,5 +187,6 @@ def submit():
 def success():
     return render_template("success.html")
 
+# 🔥 IMPORTANT for Render
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
