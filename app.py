@@ -195,9 +195,9 @@ def submit():
     return redirect('/success')
 
 # 🎉 SUCCESS
-@app.route('/success')
-def success():
-    return render_template("success.html")
+@app.route('/success/<reg_id>')
+def success(reg_id):
+    return render_template("success.html", reg_id=reg_id)
 
 # 🔥 Render
 if __name__ == '__main__':
