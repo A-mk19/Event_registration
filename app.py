@@ -199,7 +199,7 @@ def submit():
     return redirect('/success')
 
 # 🎉 SUCCESS
-@app.route('/success')
+@app.route('/success'+reg_id)
 def success():
     return render_template("success.html")
 
