@@ -2,35 +2,26 @@ from flask import Flask, render_template, request, redirect
 import mysql.connector
 import random
 import string
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import qrcode
 import os
-from dotenv import load_dotenv
-import os
 
-# 🔐 Load env
-load_dotenv()
 
 app = Flask(__name__)
 
 # 🔌 DB Connection
 def get_db():
     return mysql.connector.connect(
-        # host=os.getenv("DB_HOST"),
-        # port=int(os.getenv("DB_PORT")),  # ✅ fallback
-        # user=os.getenv("DB_USER"),
-        # password=os.getenv("DB_PASSWORD"),
-        # database=os.getenv("DB_NAME")
-        DB_HOST="centerbeam.proxy.rlwy.net",
-DB_PORT="47605",
-DB_USER="root",
-DB_PASSWORD="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
-DB_NAME="railway"
+    host="centerbeam.proxy.rlwy.net",
+    port=47605,          # ⚠️ VERY IMPORTANT
+    user="root",
+    password="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
+    database="railway"
     )
 
 # 🎯 Generate REG_ID
 def generate_reg_id():
-    year = str(datetime.now(timezone.utc).year)[-2:]
+    year = str(datetime.now().year)[-2:]
     rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"EV{year}{rand}"
 
@@ -45,13 +36,13 @@ def generate_qr(reg_id):
     qrcode.make(upi_link).save(path)
     return path
 
-# 🏠 HOME
+# 🏠 HOME → Create REG_ID
 @app.route('/')
 def home():
     conn = get_db()
     cursor = conn.cursor()
 
-    # 🧹 delete expired
+    # 🧹 Cleanup expired
     cursor.execute("""
         DELETE FROM ST_TABLE
         WHERE STATUS='PENDING'
@@ -59,13 +50,13 @@ def home():
     """)
     conn.commit()
 
-    # 🎯 new REG_ID
+    # 🎯 New REG_ID
     reg_id = generate_reg_id()
 
     cursor.execute("""
         INSERT INTO ST_TABLE (REG_ID, CREATED_AT, STATUS)
         VALUES (%s, %s, %s)
-    """, (reg_id, datetime.utcnow(), "PENDING"))
+    """, (reg_id, datetime.now(), "PENDING"))
 
     conn.commit()
     cursor.close()
@@ -75,7 +66,7 @@ def home():
 
     return redirect(f'/payment/{reg_id}')
 
-# 💳 PAYMENT
+# 💳 PAYMENT PAGE
 @app.route('/payment/<reg_id>')
 def payment(reg_id):
     conn = get_db()
@@ -90,24 +81,16 @@ def payment(reg_id):
     if not data:
         return "❌ Invalid Link"
 
-    created_at = data['CREATED_AT']
-
-    # 🔥 fix datetime
-    if isinstance(created_at, str):
-        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
-
-    created_at = created_at.replace(tzinfo=timezone.utc)
-
-    expiry_time = created_at + timedelta(minutes=5)
+    expiry_time = (data['CREATED_AT'] + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
 
     return render_template(
         "payment.html",
         reg_id=reg_id,
         qr_file=f"qr_{reg_id}.png",
-        expiry_time=expiry_time.isoformat()
+        expiry_time=expiry_time
     )
 
-# 🔐 VERIFY
+# 🔐 VERIFY REG_ID
 @app.route('/verify', methods=['POST'])
 def verify():
     user_reg = request.form['reg_id']
@@ -124,11 +107,7 @@ def verify():
     if data['STATUS'] != 'PENDING':
         return "⚠️ Already used"
 
-    created_at = data['CREATED_AT']
-    if isinstance(created_at, str):
-        created_at = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
-
-    if datetime.utcnow() - created_at > timedelta(minutes=5):
+    if datetime.now() - data['CREATED_AT'] > timedelta(minutes=5):
         cursor.execute("DELETE FROM ST_TABLE WHERE REG_ID=%s", (user_reg,))
         conn.commit()
         return "⏰ Expired"
@@ -138,7 +117,7 @@ def verify():
 
     return redirect(f'/register/{user_reg}')
 
-# 📝 REGISTER
+# 📝 REGISTER PAGE
 @app.route('/register/<reg_id>')
 def register(reg_id):
     conn = get_db()
@@ -193,4 +172,4 @@ def success():
     return render_template("success.html")
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
