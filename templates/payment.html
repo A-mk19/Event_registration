@@ -19,17 +19,14 @@
     <input type="text" name="reg_id" placeholder="Enter REG_ID" required>
     <button type="submit">Verify</button>
 </form>
-
-<script>
-    const expiry = new Date("{{ expiry_time }}").getTime();
+   <script>
+    let timeLeft = {{ remaining_seconds }};
 
     const timerEl = document.getElementById("timer");
 
     const interval = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = expiry - now;
 
-        if (distance <= 0) {
+        if (timeLeft <= 0) {
             clearInterval(interval);
             timerEl.innerHTML = "00:00";
 
@@ -40,12 +37,14 @@
             return;
         }
 
-        const minutes = Math.floor(distance / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
 
         timerEl.innerHTML =
             String(minutes).padStart(2, '0') + ":" +
             String(seconds).padStart(2, '0');
+
+        timeLeft--;
 
     }, 1000);
 </script>
