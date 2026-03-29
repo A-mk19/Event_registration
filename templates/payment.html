@@ -134,22 +134,45 @@ button {
 let timeLeft = {{ remaining_seconds }};
 const timerEl = document.getElementById("timer");
 
-setInterval(() => {
-    if(timeLeft <= 0){
-        timerEl.innerHTML = "00:00";
+// Disable form when expired
+const form = document.querySelector("form");
+const button = document.querySelector("button");
+
+const interval = setInterval(() => {
+
+    if (timeLeft <= 0) {
+        clearInterval(interval);
+
+        // Show expired
+        timerEl.innerHTML = "EXPIRED";
+
+        // Disable input + button
+        if(form){
+            form.querySelectorAll("input").forEach(inp => inp.disabled = true);
+        }
+        if(button){
+            button.disabled = true;
+            button.innerText = "Session Expired";
+        }
+
+        // 🔄 Redirect after 2 sec
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 2000);
+
         return;
     }
 
-    let m = Math.floor(timeLeft/60);
-    let s = timeLeft%60;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
 
     timerEl.innerHTML =
-        String(m).padStart(2,'0') + ":" +
-        String(s).padStart(2,'0');
+        String(minutes).padStart(2, '0') + ":" +
+        String(seconds).padStart(2, '0');
 
     timeLeft--;
-},1000);
-</script>
 
+}, 1000);
+</script>
 </body>
 </html>
