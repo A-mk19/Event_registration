@@ -2,11 +2,11 @@ import mysql.connector
 
 # 🔌 Railway MySQL Connection
 conn = mysql.connector.connect(
-     host="centerbeam.proxy.rlwy.net",
-    port=47605,          # ⚠️ VERY IMPORTANT
-    user="root",
-    password="hfIUFYKTFtQcDOqIBUZChRlqwbPtkkUA",
-    database="railway"
+     host="",
+    port=,          # ⚠️ VERY IMPORTANT
+    user="",
+    password="",
+    database=""
 )
 cursor = conn.cursor()
 
