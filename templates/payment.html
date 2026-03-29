@@ -1,137 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Payment</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEMORIA 2026 Payment</title>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-        body {
-            background: linear-gradient(135deg, #eef2f3, #dfe9f3);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+    color: white;
+}
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 350px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
+/* CONTAINER */
+.container {
+    display: flex;
+    height: 100vh;
+}
 
-        h2 {
-            margin-bottom: 10px;
-        }
+/* LEFT */
+.left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
-        .amount {
-            color: #28a745;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
+/* RIGHT */
+.right {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        #timer {
-            font-size: 32px;
-            font-weight: bold;
-            color: red;
-            margin-bottom: 20px;
-        }
+/* BOX */
+.payment-box {
+    width: 90%;
+    max-width: 350px;
+    padding: 25px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    text-align: center;
+}
 
-        img {
-            margin: 15px 0;
-            border-radius: 10px;
-        }
+/* TIMER */
+#timer {
+    font-size: 32px;
+    color: red;
+    margin: 15px 0;
+}
 
-        input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            margin-bottom: 15px;
-            outline: none;
-        }
+/* QR */
+.qr {
+    width: 180px;
+    margin: 15px 0;
+}
 
-        input:focus {
-            border-color: #007bff;
-        }
+/* INPUT */
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    margin-top: 10px;
+}
 
-        button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: #007bff;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    background: gold;
+    border: none;
+    border-radius: 6px;
+}
 
-        button:hover {
-            background: #0056b3;
-        }
+/* MOBILE */
+@media(max-width: 768px){
+    .container {
+        flex-direction: column;
+        height: auto;
+        padding: 20px 10px;
+    }
 
-        .note {
-            margin-top: 15px;
-            font-size: 12px;
-            color: #555;
-        }
-    </style>
+    .left {
+        margin-bottom: 20px;
+    }
+
+    #timer {
+        font-size: 28px;
+    }
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-    <h2>💰 Event Payment</h2>
-    <div class="amount">Pay ₹700</div>
+<div class="left">
+    <img src="{{ url_for('static', filename='vlogo.png') }}" width="100">
+    <h3>VIJAY RURAL ENGINEERING COLLEGE</h3>
+    <h1 style="color:gold;">MEMORIA 2026</h1>
+    <p style="opacity:0.7;">Where Memories Become Forever</p>
+</div>
 
-    <div id="timer"></div>
+<div class="right">
+<div class="payment-box">
 
-    <img src="{{ url_for('static', filename=qr_file) }}" width="200">
+<h2>Payment</h2>
+<h3 style="color:#00ffae;">₹700</h3>
 
-    <form action="/verify" method="POST">
-        <input name="reg_id" placeholder="Enter REG_ID from payment note" required>
-        <button>Verify Payment</button>
-    </form>
+<div id="timer"></div>
 
-    <div class="note">
-        After payment, check your payment message and enter the REG_ID to verify.
-    </div>
+<img class="qr" src="{{ url_for('static', filename=qr_file) }}">
+
+<form action="/verify" method="POST">
+<input name="reg_id" placeholder="Enter REG_ID" required>
+<button type="submit">Verify</button>
+</form>
+
+</div>
+</div>
 
 </div>
 
-<!-- TIMER SCRIPT -->
 <script>
 let timeLeft = {{ remaining_seconds }};
 const timerEl = document.getElementById("timer");
 
-const interval = setInterval(() => {
-
-    if (timeLeft <= 0) {
-        clearInterval(interval);
+setInterval(() => {
+    if(timeLeft <= 0){
         timerEl.innerHTML = "00:00";
-        setTimeout(() => window.location.href = "/", 1000);
         return;
     }
 
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
+    let m = Math.floor(timeLeft/60);
+    let s = timeLeft%60;
 
     timerEl.innerHTML =
-        String(minutes).padStart(2, '0') + ":" +
-        String(seconds).padStart(2, '0');
+        String(m).padStart(2,'0') + ":" +
+        String(s).padStart(2,'0');
 
     timeLeft--;
-
-}, 1000);
+},1000);
 </script>
 
 </body>
