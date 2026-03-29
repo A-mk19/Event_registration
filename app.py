@@ -174,7 +174,7 @@ def submit():
     reg_id = request.form['reg_id']
     htno = request.form['htno']
     name = request.form['name']
-    py = request.form.get['PY']
+    py = request.form.get('PY')
     branch = request.form['branch']
     phone = request.form['phone']
     whatsapp = request.form['whatsapp']
