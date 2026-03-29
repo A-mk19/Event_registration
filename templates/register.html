@@ -1,42 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Registration</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VREC MEMORIA 2026 Registration</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+    color: white;
+}
+
+/* MAIN WRAPPER */
+.wrapper {
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* HEADER */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.header img {
+    width: 80px;
+    margin-bottom: 10px;
+}
+
+.header h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.header h1 {
+    color: gold;
+    margin: 5px 0;
+    font-size: 24px;
+}
+
+.header p {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* FORM BOX */
+.form-box {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 15px rgba(255,215,0,0.15);
+}
+
+/* LABEL STYLE */
+.label {
+    font-size: 12px;
+    margin-top: 12px;
+    opacity: 0.7;
+}
+
+/* INPUT */
+input, select {
+    width: 90%;
+    padding: 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 14px;
+}
+
+/* ROW (for side by side fields) */
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.row div {
+    flex: 1;
+}
+
+/* BUTTON */
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    background: gold;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #ffd700;
+}
+
+/* REG ID */
+.regid {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+</style>
 </head>
-<body style="text-align:center; font-family:Arial;">
 
-<h2>📝 Complete Registration</h2>
+<body>
 
-<form action="/submit" method="POST">
+<div class="wrapper">
 
-    <input type="text" name="reg_id" value="{{ reg_id }} readonly">
+    <!-- HEADER -->
+    <div class="header">
+        <img src="{{ url_for('static', filename='vlogo.png') }}">
+        <h2>VIJAY RURAL ENGINEERING COLLEGE</h2>
+        <h1>MEMORIA 2026</h1>
+        <p>Where Memories Become Forever</p>
+    </div>
 
-    <input name="htno" placeholder="HTNO" required>
-    <input name="name" placeholder="Name" required>
-    <SELECT name="PY" required>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
+    <!-- FORM -->
+    <div class="form-box">
 
-    </SELECT>
-    <select name="branch" required>
-        <option value="">Select Branch</option>
-        <option value="CSE">CSE</option>
-        <option value="ECE">ECE</option>
-        <option value="EEE">EEE</option>
-        <option value="MECH">MECH</option>
-        <option value="CIVIL">CIVIL</option>
-    </select><br><br>
-    <input name="phone" placeholder="Phone" required>
-    <input name="whatsapp" placeholder="WhatsApp" required>
+        <div class="regid">
+            REG ID: {{ reg_id }}
+        </div>
 
-    <!-- 🔥 UTR FIELD -->
-    <input name="utr" placeholder="Enter UTR / Transaction ID" required>
+        <form action="/submit" method="POST">
 
-    <button>Submit</button>
+            <!-- Hidden actual field -->
+            <input type="hidden" name="reg_id" value="{{ reg_id }}">
 
-</form>
+            <div class="label">Hall Ticket Number</div>
+            <input name="htno" placeholder="Enter HTNO" required>
+
+            <div class="label">Full Name</div>
+            <input name="name" placeholder="Enter your name" required>
+
+            <!-- ROW -->
+            <div class="row">
+                <div>
+                    <div class="label">Year</div>
+                    <select name="PY" required>
+                        <option value="">Year</option>
+                        <option value="1">1st</option>
+                        <option value="2">2nd</option>
+                        <option value="3">3rd</option>
+                        <option value="4">4th</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="label">Branch</div>
+                    <select name="branch" required>
+                        <option value="">Branch</option>
+                        <option value="CSE">CSE</option>
+                        <option value="ECE">ECE</option>
+                        <option value="EEE">EEE</option>
+                        <option value="MECH">MECH</option>
+                        <option value="CIVIL">CIVIL</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="label">Phone Number</div>
+            <input name="phone" placeholder="Enter phone number" required>
+
+            <div class="label">WhatsApp Number</div>
+            <input name="whatsapp" placeholder="Enter WhatsApp number" required>
+
+            <div class="label">UTR / Transaction ID</div>
+            <input name="utr" placeholder="Enter UTR after payment" required>
+
+            <button type="submit">Complete Registration</button>
+
+        </form>
+
+    </div>
+
+</div>
 
 </body>
 </html>
